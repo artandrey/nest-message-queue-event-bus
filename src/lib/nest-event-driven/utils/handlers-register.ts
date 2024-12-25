@@ -6,6 +6,7 @@ import { EventOption } from '../interfaces/event-handler.interface';
 export class HandlerRegister<T, TypeT extends Type<T> = Type<T>> {
   private handlers = new Map<string, Set<T>>();
   private scopedHandlers = new Map<string, Set<TypeT>>();
+  private queueNames = new Set<string>();
 
   constructor(
     private moduleRef: ModuleRef,
@@ -23,11 +24,13 @@ export class HandlerRegister<T, TypeT extends Type<T> = Type<T>> {
       if (instance) {
         if (Array.isArray(eventOptions)) {
           for (const singleTarget of eventOptions) {
+            this.registerQueueName(singleTarget);
             const handlerKey = this.buildHandlerKey(singleTarget);
             const set = this.handlers.get(handlerKey) ?? new Set();
             this.handlers.set(handlerKey, set.add(instance));
           }
         } else {
+          this.registerQueueName(eventOptions);
           const handlerKey = this.buildHandlerKey(eventOptions);
           const set = this.handlers.get(handlerKey) ?? new Set();
           this.handlers.set(handlerKey, set.add(instance));
@@ -38,11 +41,13 @@ export class HandlerRegister<T, TypeT extends Type<T> = Type<T>> {
         this.moduleRef.introspect(handler);
         if (Array.isArray(eventOptions)) {
           for (const singleTarget of eventOptions) {
+            this.registerQueueName(singleTarget);
             const handlerKey = this.buildHandlerKey(singleTarget);
             const set = this.scopedHandlers.get(handlerKey) ?? new Set();
             this.scopedHandlers.set(handlerKey, set.add(handler));
           }
         } else {
+          this.registerQueueName(eventOptions);
           const handlerKey = this.buildHandlerKey(eventOptions);
           const set = this.scopedHandlers.get(handlerKey) ?? new Set();
           this.scopedHandlers.set(handlerKey, set.add(handler));
@@ -65,6 +70,15 @@ export class HandlerRegister<T, TypeT extends Type<T> = Type<T>> {
       return eventOrName.name;
     }
     return eventOrName.queueName ? `${eventOrName.event.name}-${eventOrName.queueName}` : eventOrName.event.name;
+  }
+
+  private registerQueueName(eventOptions: EventOption) {
+    if (typeof eventOptions === 'function') {
+      return;
+    }
+    if (eventOptions.queueName) {
+      this.queueNames.add(eventOptions.queueName);
+    }
   }
 
   private reflectEventOptions(handler: TypeT): EventOption {
@@ -93,5 +107,9 @@ export class HandlerRegister<T, TypeT extends Type<T> = Type<T>> {
   getName<E>(event: E): string {
     const { constructor } = Object.getPrototypeOf(event);
     return constructor.name as string;
+  }
+
+  getQueueNames(): string[] {
+    return [...this.queueNames];
   }
 }
