@@ -80,6 +80,10 @@ export class EventBus<TEvent extends IEvent = IEvent>
     handlers.forEach((handler) => this.registerHandler(handler));
   }
 
+  public getQueueNames(): string[] {
+    return this.handlersRegister.getQueueNames();
+  }
+
   async consumeByStrictlySingleHandler(event: TEvent, queueName?: string): Promise<void> {
     const handlers = await this.handlersRegister.get(event, queueName);
     if (!handlers) {
