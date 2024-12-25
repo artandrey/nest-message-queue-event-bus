@@ -1,17 +1,17 @@
-import { Type } from '@nestjs/common';
+import { Injectable, Type } from '@nestjs/common';
 import { ContextIdFactory, ModuleRef } from '@nestjs/core';
 
+import { EVENTS_HANDLER_METADATA } from '../decorators/constants';
 import { EventOption } from '../interfaces/event-handler.interface';
+import { EventHandlerSignature } from '../interfaces/handler-signature.interface';
 
+@Injectable()
 export class HandlerRegister<T, TypeT extends Type<T> = Type<T>> {
   private handlers = new Map<string, Set<T>>();
   private scopedHandlers = new Map<string, Set<TypeT>>();
-  private queueNames = new Set<string>();
+  private handlersSignatures: EventHandlerSignature[] = [];
 
-  constructor(
-    private moduleRef: ModuleRef,
-    private metadataKey: any,
-  ) {}
+  constructor(private moduleRef: ModuleRef) {}
 
   registerHandler(handler: TypeT): boolean {
     const eventOptions = this.reflectEventOptions(handler);
@@ -24,13 +24,13 @@ export class HandlerRegister<T, TypeT extends Type<T> = Type<T>> {
       if (instance) {
         if (Array.isArray(eventOptions)) {
           for (const singleTarget of eventOptions) {
-            this.registerQueueName(singleTarget);
+            this.registerHandlerSignature(singleTarget);
             const handlerKey = this.buildHandlerKey(singleTarget);
             const set = this.handlers.get(handlerKey) ?? new Set();
             this.handlers.set(handlerKey, set.add(instance));
           }
         } else {
-          this.registerQueueName(eventOptions);
+          this.registerHandlerSignature(eventOptions);
           const handlerKey = this.buildHandlerKey(eventOptions);
           const set = this.handlers.get(handlerKey) ?? new Set();
           this.handlers.set(handlerKey, set.add(instance));
@@ -41,13 +41,13 @@ export class HandlerRegister<T, TypeT extends Type<T> = Type<T>> {
         this.moduleRef.introspect(handler);
         if (Array.isArray(eventOptions)) {
           for (const singleTarget of eventOptions) {
-            this.registerQueueName(singleTarget);
+            this.registerHandlerSignature(singleTarget);
             const handlerKey = this.buildHandlerKey(singleTarget);
             const set = this.scopedHandlers.get(handlerKey) ?? new Set();
             this.scopedHandlers.set(handlerKey, set.add(handler));
           }
         } else {
-          this.registerQueueName(eventOptions);
+          this.registerHandlerSignature(eventOptions);
           const handlerKey = this.buildHandlerKey(eventOptions);
           const set = this.scopedHandlers.get(handlerKey) ?? new Set();
           this.scopedHandlers.set(handlerKey, set.add(handler));
@@ -72,17 +72,16 @@ export class HandlerRegister<T, TypeT extends Type<T> = Type<T>> {
     return eventOrName.queueName ? `${eventOrName.event.name}-${eventOrName.queueName}` : eventOrName.event.name;
   }
 
-  private registerQueueName(eventOptions: EventOption) {
+  private registerHandlerSignature(eventOptions: EventOption) {
     if (typeof eventOptions === 'function') {
-      return;
-    }
-    if (eventOptions.queueName) {
-      this.queueNames.add(eventOptions.queueName);
+      this.handlersSignatures.push({ event: eventOptions });
+    } else {
+      this.handlersSignatures.push(eventOptions);
     }
   }
 
   private reflectEventOptions(handler: TypeT): EventOption {
-    return Reflect.getMetadata(this.metadataKey, handler);
+    return Reflect.getMetadata(EVENTS_HANDLER_METADATA, handler);
   }
 
   async get<E>(event: E, queueName?: string): Promise<T[] | undefined> {
@@ -109,7 +108,7 @@ export class HandlerRegister<T, TypeT extends Type<T> = Type<T>> {
     return constructor.name as string;
   }
 
-  getQueueNames(): string[] {
-    return [...this.queueNames];
+  getHandlerSignatures(): Readonly<EventHandlerSignature[]> {
+    return this.handlersSignatures;
   }
 }

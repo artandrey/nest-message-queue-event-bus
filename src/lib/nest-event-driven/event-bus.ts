@@ -1,5 +1,4 @@
 import { Injectable, OnModuleDestroy, Type } from '@nestjs/common';
-import { ModuleRef } from '@nestjs/core';
 import { Subscription } from 'rxjs';
 import { filter } from 'rxjs/operators';
 
@@ -10,7 +9,8 @@ import { IEventBus } from './interfaces/event-bus.interface';
 import { IEventHandler } from './interfaces/event-handler.interface';
 import { IEventPublisher } from './interfaces/event-publisher.interface';
 import { IEvent } from './interfaces/event.interface';
-import { HandlerRegister } from './utils/handlers-register';
+import { EventHandlerSignature } from './interfaces/handler-signature.interface';
+import { HandlerRegister } from './services/handlers-register.service';
 import { ObservableBus } from './utils/observable-bus';
 
 export type EventHandlerType<TEvent extends IEvent = IEvent> = Type<IEventHandler<TEvent>>;
@@ -24,13 +24,11 @@ export class EventBus<TEvent extends IEvent = IEvent>
   protected readonly subscriptions: Subscription[];
 
   protected _pubsub: IEventPublisher | null = null;
-  private handlersRegister: HandlerRegister<IEventHandler<TEvent>>;
 
-  constructor(moduleRef: ModuleRef) {
+  constructor(private readonly handlersRegister: HandlerRegister<IEventHandler<TEvent>>) {
     super();
     this.subscriptions = [];
     this.getEventName = defaultGetEventName;
-    this.handlersRegister = new HandlerRegister<IEventHandler<TEvent>>(moduleRef, EVENTS_HANDLER_METADATA);
     this.useDefaultPubSub();
   }
 
@@ -80,8 +78,8 @@ export class EventBus<TEvent extends IEvent = IEvent>
     handlers.forEach((handler) => this.registerHandler(handler));
   }
 
-  public getQueueNames(): string[] {
-    return this.handlersRegister.getQueueNames();
+  public getHandlerSignatures(): Readonly<EventHandlerSignature[]> {
+    return this.handlersRegister.getHandlerSignatures();
   }
 
   async consumeByStrictlySingleHandler(event: TEvent, queueName?: string): Promise<void> {
