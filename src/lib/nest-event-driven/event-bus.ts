@@ -80,8 +80,8 @@ export class EventBus<TEvent extends IEvent = IEvent>
     handlers.forEach((handler) => this.registerHandler(handler));
   }
 
-  async consumeByStrictlySingleHandler(event: TEvent): Promise<void> {
-    const handlers = await this.handlersRegister.get(event);
+  async consumeByStrictlySingleHandler(event: TEvent, queueName?: string): Promise<void> {
+    const handlers = await this.handlersRegister.get(event, queueName);
     if (!handlers) {
       throw new Error('No handler found for the event');
     }

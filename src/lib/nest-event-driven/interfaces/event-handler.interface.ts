@@ -2,9 +2,16 @@ import { Scope } from '@nestjs/common';
 
 import { IEvent } from './event.interface';
 
-export interface IEventHandlerOptions {
-  events: (IEvent | (new (...args: any[]) => IEvent))[];
+export type EventSignature = new (...args: any[]) => IEvent;
+export type EventOption =
+  | EventSignature
+  | {
+      event: EventSignature;
+      queueName?: string;
+    };
 
+export interface IEventHandlerOptions {
+  events: EventOption[];
   scope?: Scope;
 }
 
