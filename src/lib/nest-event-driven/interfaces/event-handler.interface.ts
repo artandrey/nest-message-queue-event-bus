@@ -10,8 +10,7 @@ export type EventOption =
       queueName?: string;
     };
 
-export interface IEventHandlerOptions {
-  events: EventOption[];
+export interface EventHandlerProviderOptions {
   scope?: Scope;
 }
 
