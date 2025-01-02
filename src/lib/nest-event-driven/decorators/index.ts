@@ -1,1 +1,1 @@
-export { EventsHandler } from './event-handler.decorator';
+export { EventHandler } from './event-handler.decorator';

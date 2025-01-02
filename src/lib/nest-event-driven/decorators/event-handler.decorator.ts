@@ -4,11 +4,11 @@ import { IEventHandlerOptions } from '../interfaces/event-handler.interface';
 import { IEvent } from '../interfaces/event.interface';
 import { EVENTS_HANDLER_METADATA, SCOPE_OPTIONS_METADATA } from './constants';
 
-export function EventsHandler(options: IEventHandlerOptions): ClassDecorator;
+export function EventHandler(options: IEventHandlerOptions): ClassDecorator;
 
-export function EventsHandler(...events: (IEvent | (new (...args: any[]) => IEvent))[]): ClassDecorator;
+export function EventHandler(...events: (IEvent | (new (...args: any[]) => IEvent))[]): ClassDecorator;
 
-export function EventsHandler(...eventsOrOptions: any[]): ClassDecorator {
+export function EventHandler(...eventsOrOptions: any[]): ClassDecorator {
   return (target: object) => {
     if (!eventsOrOptions?.[0].prototype && eventsOrOptions?.[0]?.events) {
       const options: IEventHandlerOptions = eventsOrOptions.shift();
