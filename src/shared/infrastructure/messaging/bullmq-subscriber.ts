@@ -16,6 +16,7 @@ export class BullMqSubscriber {
     this.connection = new IORedis({
       host: this.configService.get('REDIS_HOST'),
       port: this.configService.get('REDIS_PORT'),
+      maxRetriesPerRequest: null,
     });
   }
 
