@@ -1,22 +1,19 @@
+import { Scope } from '@nestjs/common';
 import 'reflect-metadata';
 
-import { IEventHandlerOptions } from '../interfaces/event-handler.interface';
-import { IEvent } from '../interfaces/event.interface';
+import { EventHandlerProviderOptions, EventOption } from '../interfaces/event-handler.interface';
 import { EVENTS_HANDLER_METADATA, SCOPE_OPTIONS_METADATA } from './constants';
 
-export function EventHandler(options: IEventHandlerOptions): ClassDecorator;
-
-export function EventHandler(...events: (IEvent | (new (...args: any[]) => IEvent))[]): ClassDecorator;
-
-export function EventHandler(...eventsOrOptions: any[]): ClassDecorator {
+export function EventHandler(
+  events: EventOption | EventOption[],
+  options: EventHandlerProviderOptions = { scope: Scope.DEFAULT },
+): ClassDecorator {
   return (target: object) => {
-    if (!eventsOrOptions?.[0].prototype && eventsOrOptions?.[0]?.events) {
-      const options: IEventHandlerOptions = eventsOrOptions.shift();
-      Reflect.defineMetadata(EVENTS_HANDLER_METADATA, options.events, target);
-      Reflect.defineMetadata(SCOPE_OPTIONS_METADATA, { scope: options.scope }, target);
-    } else {
-      const events: IEvent[] = eventsOrOptions;
+    if (Array.isArray(events)) {
       Reflect.defineMetadata(EVENTS_HANDLER_METADATA, events, target);
+    } else {
+      Reflect.defineMetadata(EVENTS_HANDLER_METADATA, [events], target);
     }
+    Reflect.defineMetadata(SCOPE_OPTIONS_METADATA, { scope: options.scope }, target);
   };
 }
