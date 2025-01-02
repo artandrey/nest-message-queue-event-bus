@@ -4,7 +4,7 @@ import { TestingModule } from '@nestjs/testing';
 import { RedisContainer, StartedRedisContainer } from '@testcontainers/redis';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { EventBus, EventsHandler, IEventHandler } from '~lib/nest-event-driven';
+import { EventBus, EventHandler, IEventHandler } from '~lib/nest-event-driven';
 import { EventDrivenModule } from '~lib/nest-event-driven/event-driven.module';
 import { IEvent } from '~lib/nest-event-driven/interfaces/event.interface';
 import { BullMqPublisher } from '~shared/infrastructure/messaging/bullmq-publisher';
@@ -25,13 +25,9 @@ describe('Event driven with BullMQ', () => {
 
     const processedSpy = vi.fn();
 
-    @EventsHandler({
-      events: [
-        {
-          event: TestEvent,
-          queueName: 'queue',
-        },
-      ],
+    @EventHandler({
+      event: TestEvent,
+      queueName: 'queue',
     })
     class TestEventHandler implements IEventHandler<TestEvent> {
       handle(event: TestEvent): void {
