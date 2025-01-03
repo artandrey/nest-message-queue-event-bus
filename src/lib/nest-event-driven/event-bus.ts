@@ -84,7 +84,7 @@ export class EventBus<TEvent extends IEvent = IEvent>
 
   async consumeByStrictlySingleHandler(event: TEvent, queueName?: string): Promise<void> {
     const handlers = await this.handlersRegister.get(event, queueName);
-    if (!handlers) {
+    if (!handlers || handlers.length === 0) {
       throw new Error('No handler found for the event');
     }
     if (handlers.length !== 1) {
