@@ -87,6 +87,7 @@ export class EventBus<TEvent extends IEvent = IEvent>
     if (!handlers) {
       throw new Error('No handler found for the event');
     }
+
     if (handlers.length !== 1) {
       throw new Error('More than one handler found for the event');
     }
