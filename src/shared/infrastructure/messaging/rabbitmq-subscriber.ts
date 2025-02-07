@@ -23,7 +23,7 @@ export class RabbitMqSubscriber implements OnApplicationBootstrap {
       channel.consume(handlerSignature.queueName, async (message) => {
         if (!message) return;
         const event = plainToInstance(handlerSignature.event, JSON.parse(message.content.toString()));
-        await this.eventBus.consumeByStrictlySingleHandler(event, handlerSignature.queueName);
+        await this.eventBus.synchronouslyConsumeByStrictlySingleHandler(event, handlerSignature.queueName);
         channel.ack(message);
       });
     }
