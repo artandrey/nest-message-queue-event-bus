@@ -30,7 +30,7 @@ export class BullMqSubscriber {
         handlerSignature.queueName,
         async (job: Job) => {
           const event = new handlerSignature.event(job.data);
-          await this.eventBus.consumeByStrictlySingleHandler(event, handlerSignature.queueName);
+          await this.eventBus.synchronouslyConsumeByStrictlySingleHandler(event, handlerSignature.queueName);
         },
         { connection: this.connection },
       );
