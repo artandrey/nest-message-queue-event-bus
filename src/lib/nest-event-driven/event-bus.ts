@@ -3,7 +3,6 @@ import { Subscription } from 'rxjs';
 import { filter } from 'rxjs/operators';
 
 import { EVENTS_HANDLER_METADATA } from './decorators/constants';
-import { DefaultPubSub } from './default-pub-sub';
 import { defaultGetEventName } from './helpers/default-get-event-name';
 import { IEventBus } from './interfaces/event-bus.interface';
 import { IEventHandler } from './interfaces/event-handler.interface';
@@ -29,7 +28,6 @@ export class EventBus<TEvent extends IEvent = IEvent>
     super();
     this.subscriptions = [];
     this.getEventName = defaultGetEventName;
-    this.useDefaultPubSub();
   }
 
   get publisher(): IEventPublisher {
@@ -82,15 +80,23 @@ export class EventBus<TEvent extends IEvent = IEvent>
     return this.handlersRegister.getHandlerSignatures();
   }
 
-  async consumeByStrictlySingleHandler(event: TEvent, queueName?: string): Promise<void> {
+  async synchronouslyConsumeByStrictlySingleHandler(event: TEvent, queueName?: string): Promise<void> {
     const handlers = await this.handlersRegister.get(event, queueName);
-    if (!handlers) {
+    if (!handlers || handlers.length === 0) {
       throw new Error('No handler found for the event');
     }
     if (handlers.length !== 1) {
       throw new Error('More than one handler found for the event');
     }
     return handlers[0].handle(event);
+  }
+
+  async synchronouslyConsumeByMultipleHandlers(event: TEvent, queueName?: string): Promise<void> {
+    const handlers = await this.handlersRegister.get(event, queueName);
+    if (!handlers || handlers.length === 0) {
+      throw new Error('No handler found for the event');
+    }
+    return handlers.forEach((handler) => handler.handle(event));
   }
 
   protected registerHandler(handler: EventHandlerType<TEvent>) {
@@ -107,9 +113,5 @@ export class EventBus<TEvent extends IEvent = IEvent>
 
   private reflectEventsNames(handler: EventHandlerType<TEvent>): FunctionConstructor[] {
     return Reflect.getMetadata(EVENTS_HANDLER_METADATA, handler);
-  }
-
-  private useDefaultPubSub() {
-    this._pubsub = new DefaultPubSub();
   }
 }
